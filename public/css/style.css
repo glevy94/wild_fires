@@ -4,7 +4,7 @@
 }
 
 #yearSlider {
-    width: 100%;
+    width: 90%;
     -webkit-appearance: none; /* Override default CSS styles */
     appearance: none;
     height: 15px;
@@ -27,23 +27,30 @@
 #yearSlider::-moz-range-thumb {
     width: 25px;
     height: 25px;
-    background: #4CAF50;
+    background: #7b3b98;
     cursor: pointer;
 }
 
 #slider-value {
+    font-size: 50px;
     position: absolute;
-    bottom: -25px; /* Adjust as needed */
+    bottom: -50px; /* Adjust as needed */
     left: 50%;
     transform: translateX(-50%);
 }
 
 #costDisplay {
-    margin-top: 10px;
-
+    margin-top: 50px;
+    text-align: center;
 }
 
 #graph {
     width: 100%;
-    
+
+}
+
+button {
+    font-size: 16px;
+    padding: 5px 10px;
+    margin: 0 5px;
 }

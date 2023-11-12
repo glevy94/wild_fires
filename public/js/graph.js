@@ -26,8 +26,17 @@ function updateCostDisplay(year) {
     }
 }
 
+function getCategoryColor(category) {
+    const colorMapping = {
+        'Human': 'red',
+        'Natural': 'green'
+    };
+    return colorMapping[category] || 'gray';
+}
+
 // Function to plot data using Plotly
 function plotData(geojsonData, year) {
+
     // Process the GeoJSON data to extract coordinates and other properties
     var plotData = geojsonData.features.map(function(feature) {
         return {
@@ -38,7 +47,7 @@ function plotData(geojsonData, year) {
             lat: [feature.geometry.coordinates[1]],
             marker: {
                 size: 2,
-                color: 'red' // Customize color as needed
+                color: getCategoryColor(feature.properties.FireCause)
             }
         };
     });
@@ -90,6 +99,32 @@ document.getElementById('yearSlider').addEventListener('input', function() {
     updateGraph(this.value);
     document.getElementById('slider-value').textContent = this.value;
     updateCostDisplay(this.value);
+});
+
+document.getElementById('increase').addEventListener('click', function() {
+    var slider = document.getElementById('yearSlider');
+    var currentValue = parseInt(slider.value);
+    var maxValue = parseInt(slider.max);
+
+    if (currentValue < maxValue) {
+        slider.value = currentValue + 1;
+        updateGraph(slider.value);
+        updateCostDisplay(slider.value); // If you have a function to update the cost display
+        document.getElementById('slider-value').textContent = slider.value;
+    }
+});
+
+document.getElementById('decrease').addEventListener('click', function() {
+    var slider = document.getElementById('yearSlider');
+    var currentValue = parseInt(slider.value);
+    var minValue = parseInt(slider.min);
+
+    if (currentValue > minValue) {
+        slider.value = currentValue - 1;
+        updateGraph(slider.value);
+        updateCostDisplay(slider.value); // If you have a function to update the cost display
+        document.getElementById('slider-value').textContent = slider.value;
+    }
 });
 
 // Initial graph setup
