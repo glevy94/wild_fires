@@ -2,6 +2,7 @@
 let dataCache = {}; // Cache for storing loaded data
 
 
+
 /*initial graph setup*/ 
 
 // Initial graph setup
@@ -13,6 +14,8 @@ updateFilters(year, month, radioCause);
 
 
 
+/*creating and updating graph */
+
 // Function to load data based on year and month and update the graph
 function updateFilters(year, month, causeFilter) {
     let formattedMonth = month.toString();
@@ -21,7 +24,18 @@ function updateFilters(year, month, causeFilter) {
 
     let cacheKey = year + '_' + formattedMonth;
     if (dataCache[cacheKey]) {
-        const filteredData = updateGraphCause(dataCache[cacheKey], causeFilter);
+        let filteredData;
+
+        if (causeFilter === "Both") {
+            // Chart both "Human" and "Natural"
+            const humanData = updateGraphCause(dataCache[cacheKey], "Human");
+            const naturalData = updateGraphCause(dataCache[cacheKey], "Natural");
+            filteredData = mergeData(humanData, naturalData);
+        } else {
+            // Chart the selected option
+            filteredData = updateGraphCause(dataCache[cacheKey], causeFilter);
+        }
+
         initPlot(filteredData, year, month);
         return;
     }
@@ -32,16 +46,29 @@ function updateFilters(year, month, causeFilter) {
     }).catch(error => console.error('Error loading the GeoJSON data:', error));
 }
 
-
-// helper Function to load data based on cause and update the graph
-function updateGraphCause(causeFilter) {
+// Function to merge two sets of GeoJSON data
+function mergeData(data1, data2) {
     return {
         type: 'FeatureCollection',
-        features: geojsonData.features.filter(feature => feature.properties.FireCause === causeFilter)
+        features: data1.features.concat(data2.features)
     };
 }
 
-// Function for initial plot data using Plotly
+
+// helper Function to load data based on cause and update the graph
+function updateGraphCause(data, causeFilter) {
+    
+    console.log('Original Data:', data.features);
+    const filteredData = {
+        type: 'FeatureCollection',
+        features: data.features.filter(feature => feature.properties.FireCause == causeFilter)
+    };
+
+    console.log('Filtered Data:', filteredData);
+    return filteredData;
+}
+
+// plot the actual data
 function initPlot(geojsonData, year, month) {
 
     // Process the GeoJSON data to extract coordinates and other properties
@@ -91,6 +118,12 @@ function getCategoryColor(category) {
     return colorMapping[category] || 'gray';
 }
 
+
+
+
+
+/*Slider stuff */
+
 // Function to translate slider value to year and month
 function sliderValueToDate(value) {
     const startYear = 2020;
@@ -118,6 +151,9 @@ function setSliderValue(year, month) {
     // Update the displayed value
     document.getElementById('slider-value').textContent = `${month}/${year}`;
 }
+
+
+
 
 
 /*EVENT LISTENERS*/
@@ -175,18 +211,23 @@ document.getElementById('apply-date').addEventListener('click', function() {
 
 //event listener for radio buttons
 document.getElementById('filter-form').addEventListener('change', function() {
-    var selectedOption = getElementById('filter-form').value;
+    
+    console.log('Filter form changed');
+    var radioButtons = document.querySelectorAll('#filter-form input[name="fire-filter"]');
 
-    var update = {
-        transforms: [{
-            type: 'filter',
-            target: 'y',
-            operation: '=',
-            value: selectedOption
-          }]
-    }; 
+    // Find the selected radio button
+    var selectedOption;
+    for (var i = 0; i < radioButtons.length; i++) {
+        if (radioButtons[i].checked) {
+            selectedOption = radioButtons[i].value;
+            break;
+        }
+    }
+    var selectedYear = document.getElementById('year-select').value;
+    var selectedMonth = document.getElementById('month-select').value;
+
     // Now you can use selectedDate to filter your data or update your graph/chart
-    updateFilters(selectedOption);
+    updateFilters(selectedYear, selectedMonth, selectedOption);
 });
 
 
