@@ -8,7 +8,7 @@ let dataCache = {}; // Cache for storing loaded data
 // Initial graph setup
 const initialYear = document.getElementById('dateSlider').value;
 let { year, month } = sliderValueToDate(parseInt(initialYear));
-const radioCause = document.getElementById('filter-form').value;
+const radioCause = document.getElementById('filter-form').value; 
 updateFilters(year, month, radioCause);
 
 
@@ -197,21 +197,23 @@ document.getElementById('decrease').addEventListener('click', function() {
 });
 
 //event listener for apply date button
-document.getElementById('apply-date').addEventListener('click', function() {
-    var selectedYear = document.getElementById('year-select').value;
-    var selectedMonth = document.getElementById('month-select').value;
+document.getElementById('apply-date').addEventListener('click', handleFilterChange);//function() {
+//     var selectedYear = document.getElementById('year-select').value;
+//     var selectedMonth = document.getElementById('month-select').value;
 
-    // Combine the year and month to a date string or as needed
-    //var selectedDate = `${selectedYear}-${selectedMonth}`;
+//     // Combine the year and month to a date string or as needed
+//     //var selectedDate = `${selectedYear}-${selectedMonth}`;
 
-    // Now you can use selectedDate to filter your data or update your graph/chart
-    updateFilters(selectedYear, selectedMonth, radioCause);
-    setSliderValue(selectedYear, selectedMonth)
-});
+//     // Now you can use selectedDate to filter your data or update your graph/chart
+//     updateFilters(selectedYear, selectedMonth, radioCause);
+//     setSliderValue(selectedYear, selectedMonth)
+// });
 
-//event listener for radio buttons
-document.getElementById('filter-form').addEventListener('change', function() {
-    
+// Add event listener for radio buttons 
+document.getElementById('filter-form').addEventListener('change', handleFilterChange);
+
+//helper function for radio buttons
+function handleFilterChange() {
     console.log('Filter form changed');
     var radioButtons = document.querySelectorAll('#filter-form input[name="fire-filter"]');
 
@@ -226,9 +228,10 @@ document.getElementById('filter-form').addEventListener('change', function() {
     var selectedYear = document.getElementById('year-select').value;
     var selectedMonth = document.getElementById('month-select').value;
 
-    // Now you can use selectedDate to filter your data or update your graph/chart
     updateFilters(selectedYear, selectedMonth, selectedOption);
-});
+}
+
+
 
 
 
