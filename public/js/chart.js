@@ -69,7 +69,7 @@ function plotCombinedGraph(data) {
     };
 
     var layout = {
-        title: 'Fires and Acres Burned per Month',
+        //title: 'Fires and Acres Burned per Month',
         xaxis: { title: 'Month' },
         yaxis: { title: 'Number of Fires' },
         yaxis2: {

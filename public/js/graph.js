@@ -1,33 +1,10 @@
-let costData = {}; // To store cost data
 let dataCache = {}; // Cache for storing loaded data
 
-// Function to load cost data
-function loadCostData() {
-    d3.json('/data/supp_costs.json').then(function(data) {
-        // Convert array to a key-value object
-        data.forEach(item => {
-            costData[item.Year] = item.Total;
-        });
-        // Initial update for cost display
-        const initialYear = document.getElementById('dateSlider').value;
-        let { year, month } = sliderValueToDate(parseInt(initialYear));
-        updateCostDisplay(year);
-    }).catch(error => console.error('Error loading cost data:', error));
-}
-
-// Function to update the cost display
-function updateCostDisplay(year) {
-    const cost = costData[year];
-    const costElement = document.getElementById('costDisplay');
-
-    if (cost) {
-        costElement.textContent = `$${cost.toLocaleString()} in ${year}`;
-        // costElement.style.fontSize = `${(cost / 20000000)}px`; // Adjust size relative to cost
-        costElement.style.fontSize = `100px`;
-    } else {
-        costElement.textContent = 'No data';
-    }
-}
+// Initial graph setup
+let year = "2020";
+let month  = "1";
+updateGraph(year, month);
+updateHeading(year, month);
 
 // function to color points on graph
 function getCategoryColor(category) {
@@ -50,14 +27,14 @@ function plotData(geojsonData, year, month) {
             lon: [feature.geometry.coordinates[0]],
             lat: [feature.geometry.coordinates[1]],
             marker: {
-                size: 2,
+                size: 5,
                 color: getCategoryColor(feature.properties.FireCause)
             }
         };
     });
 
     var layout = {
-        title: `Incident Data for ${month}/${year}`,
+        // title: `Incident Data for ${month}/${year}`,
         geo: {
             scope: 'usa',
             projection: {
@@ -68,8 +45,13 @@ function plotData(geojsonData, year, month) {
         },
         showlegend: false,
         autosize: true,
-        //height: 1000,
-        
+        margin: {
+            l: 0,  // Left margin
+            r: 0,  // Right margin
+            b: 0,  // Bottom margin
+            t: 0,  // Top margin
+            pad: 0  // Padding between plot and margins
+        },
     };
 
     var config = {
@@ -85,7 +67,7 @@ function updateGraph(year, month) {
     let formattedMonth = month.toString();
 
     const fileName = `/data/year_month/data_${year}_${formattedMonth}.geojson`;
-
+    console.log(fileName)
     let cacheKey = year + '_' + formattedMonth;
     if (dataCache[cacheKey]) {
         plotData(dataCache[cacheKey], year, month);
@@ -94,82 +76,51 @@ function updateGraph(year, month) {
 
     d3.json(fileName).then(function(geojsonData) {
         dataCache[cacheKey] = geojsonData;
-        plotData(geojsonData, year, month);
+        let filteredGeojsonData = applyFilter(geojsonData);
+        plotData(filteredGeojsonData, year, month);
     }).catch(error => console.error('Error loading the GeoJSON data:', error));
 }
 
-// Function to translate slider value to year and month
-function sliderValueToDate(value) {
-    const startYear = 2020;
-    let year = Math.floor(value / 12) + startYear;
-    let month = (value % 12) + 1;
-    return { year, month };
-}
-
-// Function to translate year and month to slider value
-function dateToSliderValue(year, month) {
-    const startYear = 2020;
-    let yearDiff = year - startYear;
-    let sliderValue = (yearDiff * 12) + (month - 1);
-    return sliderValue;
-}
-
-
-// Event listener for the date slider
-document.getElementById('dateSlider').addEventListener('input', function() {
-    let { year, month } = sliderValueToDate(parseInt(this.value));
-    document.getElementById('slider-value').textContent = `${month}/${year}`;
-    updateGraph(year, month);
-    updateCostDisplay(year);
-});
-
-// Event listener for increasing the date with button
-document.getElementById('increase').addEventListener('click', function() {
-    var slider = document.getElementById('dateSlider');
-    var currentValue = parseInt(slider.value);
-    var maxValue = parseInt(slider.max);
-
-    if (currentValue < maxValue) {
-        slider.value = currentValue + 1;
-        let { year, month } = sliderValueToDate(parseInt(slider.value));
-        updateGraph(year, month);
-        document.getElementById('slider-value').textContent = `${month}/${year}`;
-    }
-});
-
-// Event listener for decreasing the date with button
-document.getElementById('decrease').addEventListener('click', function() {
-    var slider = document.getElementById('dateSlider');
-    var currentValue = parseInt(slider.value);
-    var minValue = parseInt(slider.min);
-
-    if (currentValue > minValue) {
-        slider.value = currentValue - 1;
-        let { year, month } = sliderValueToDate(parseInt(slider.value));
-        updateGraph(year, month);
-        document.getElementById('slider-value').textContent = `${month}/${year}`;
-    }
-});
-
+// Event listener for date selection
 document.getElementById('apply-date').addEventListener('click', function() {
     var selectedYear = document.getElementById('year-select').value;
     var selectedMonth = document.getElementById('month-select').value;
 
-    // Combine the year and month to a date string or as needed
-    var selectedDate = `${selectedYear}-${selectedMonth}`;
-
     // Now you can use selectedDate to filter your data or update your graph/chart
-    updateGraphAndChart(selectedDate);
+    updateGraph(selectedYear, selectedMonth);
+    updateHeading(selectedYear, selectedMonth)
 });
 
-function updateGraphAndChart(date) {
-    // Implement the logic to update your graph and chart based on the selected date
+function updateHeading(year, month) {
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                    "July", "August", "September", "October", "November", "December"];
+    var MonthName = monthNames[month - 1];
+    var headingText = `Wildfires in ${MonthName}, ${year}`;
+    document.getElementById('dynamic-heading').innerText = headingText;
 }
 
+document.querySelectorAll('input[name="fire-filter"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        var selectedYear = document.getElementById('year-select').value;
+        var selectedMonth = document.getElementById('month-select').value;
 
+        updateGraph(selectedYear, selectedMonth);
+    });
+});
 
-// Initial graph setup
-const initialYear = document.getElementById('dateSlider').value;
-let { year, month } = sliderValueToDate(parseInt(initialYear));
-updateGraph(year, month);
-loadCostData();
+function applyFilter(geojsonData) {
+    let selectedFilter = document.querySelector('input[name="fire-filter"]:checked').value;
+
+    if (selectedFilter === 'both') {
+        return geojsonData; // Return all data if 'Both' is selected
+    }
+
+    // Filter the data based on the selected filter ('Human' or 'Natural')
+    let filteredData = geojsonData.features.filter(feature => feature.properties.FireCause === selectedFilter);
+
+    // Create a new GeoJSON object with filtered features
+    return {
+        ...geojsonData,
+        features: filteredData
+    };
+}
