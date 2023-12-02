@@ -173,4 +173,3 @@ const initialYear = document.getElementById('dateSlider').value;
 let { year, month } = sliderValueToDate(parseInt(initialYear));
 updateGraph(year, month);
 loadCostData();
-
