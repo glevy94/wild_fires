@@ -1,82 +1,52 @@
-//let costData = {}; // To store cost data
+let costData = {}; // To store cost data
 let dataCache = {}; // Cache for storing loaded data
 
+// Function to load cost data
+function loadCostData() {
+    d3.json('/data/supp_costs.json').then(function(data) {
+        // Convert array to a key-value object
+        data.forEach(item => {
+            costData[item.Year] = item.Total;
+        });
+        // Initial update for cost display
+        const initialYear = document.getElementById('dateSlider').value;
+        let { year, month } = sliderValueToDate(parseInt(initialYear));
+        updateCostDisplay(year);
+    }).catch(error => console.error('Error loading cost data:', error));
+}
 
+// Function to update the cost display
+function updateCostDisplay(year) {
+    const cost = costData[year];
+    const costElement = document.getElementById('costDisplay');
 
-/*initial graph setup*/ 
-
-// Initial graph setup
-const initialYear = document.getElementById('dateSlider').value;
-let { year, month } = sliderValueToDate(parseInt(initialYear));
-const radioCause = document.getElementById('filter-form').value; 
-updateFilters(year, month, radioCause);
-
-
-
-
-/*creating and updating graph */
-
-// Function to load data based on year and month and update the graph
-function updateFilters(year, month, causeFilter) {
-    let formattedMonth = month.toString();
-
-    const fileName = `/data/year_month/data_${year}_${formattedMonth}.geojson`;
-
-    let cacheKey = year + '_' + formattedMonth;
-    if (dataCache[cacheKey]) {
-        let filteredData;
-
-        if (causeFilter === "Both") {
-            // Chart both "Human" and "Natural"
-            const humanData = updateGraphCause(dataCache[cacheKey], "Human");
-            const naturalData = updateGraphCause(dataCache[cacheKey], "Natural");
-            filteredData = mergeData(humanData, naturalData);
-        } else {
-            // Chart the selected option
-            filteredData = updateGraphCause(dataCache[cacheKey], causeFilter);
-        }
-
-        initPlot(filteredData, year, month);
-        return;
+    if (cost) {
+        costElement.textContent = `$${cost.toLocaleString()} in ${year}`;
+        // costElement.style.fontSize = `${(cost / 20000000)}px`; // Adjust size relative to cost
+        costElement.style.fontSize = `100px`;
+    } else {
+        costElement.textContent = 'No data';
     }
-
-    d3.json(fileName).then(function(geojsonData) {
-        dataCache[cacheKey] = geojsonData;
-        initPlot(geojsonData, year, month);
-    }).catch(error => console.error('Error loading the GeoJSON data:', error));
 }
 
-// Function to merge two sets of GeoJSON data
-function mergeData(data1, data2) {
-    return {
-        type: 'FeatureCollection',
-        features: data1.features.concat(data2.features)
+// function to color points on graph
+function getCategoryColor(category) {
+    const colorMapping = {
+        'Human': 'red',
+        'Natural': 'green'
     };
+    return colorMapping[category] || 'gray';
 }
 
-
-// helper Function to load data based on cause and update the graph
-function updateGraphCause(data, causeFilter) {
-    
-    console.log('Original Data:', data.features);
-    const filteredData = {
-        type: 'FeatureCollection',
-        features: data.features.filter(feature => feature.properties.FireCause == causeFilter)
-    };
-
-    console.log('Filtered Data:', filteredData);
-    return filteredData;
-}
-
-// plot the actual data
-function initPlot(geojsonData, year, month) {
+// Function to plot data using Plotly
+function plotData(geojsonData, year, month) {
 
     // Process the GeoJSON data to extract coordinates and other properties
     var plotData = geojsonData.features.map(function(feature) {
         return {
             type: 'scattergeo',
             mode: 'markers',
-            text: `Fire Size: ${feature.properties.IncidentSize} acres`, 
+            text: `Fire Size: ${feature.properties.IncidentSize} acres`, // Customize as per your data
             lon: [feature.geometry.coordinates[0]],
             lat: [feature.geometry.coordinates[1]],
             marker: {
@@ -106,23 +76,27 @@ function initPlot(geojsonData, year, month) {
         responsive: true,
     }
 
-    Plotly.react('graph', plotData, layout, config);
-}
-
-// function to color points on graph
-function getCategoryColor(category) {
-    const colorMapping = {
-        'Human': 'red',
-        'Natural': 'green'
-    };
-    return colorMapping[category] || 'gray';
+    Plotly.newPlot('graph', plotData, layout, config);
 }
 
 
+// Function to load data based on year and month and update the graph
+function updateGraph(year, month) {
+    let formattedMonth = month.toString();
 
+    const fileName = `/data/year_month/data_${year}_${formattedMonth}.geojson`;
 
+    let cacheKey = year + '_' + formattedMonth;
+    if (dataCache[cacheKey]) {
+        plotData(dataCache[cacheKey], year, month);
+        return;
+    }
 
-/*Slider stuff */
+    d3.json(fileName).then(function(geojsonData) {
+        dataCache[cacheKey] = geojsonData;
+        plotData(geojsonData, year, month);
+    }).catch(error => console.error('Error loading the GeoJSON data:', error));
+}
 
 // Function to translate slider value to year and month
 function sliderValueToDate(value) {
@@ -140,30 +114,13 @@ function dateToSliderValue(year, month) {
     return sliderValue;
 }
 
-// Add a function to set the slider value when changing with sidebar
-function setSliderValue(year, month) {
-    // Calculate the slider value based on the year and month
-    let sliderValue = dateToSliderValue(year, month);
-
-    // Set the slider value
-    document.getElementById('dateSlider').value = sliderValue;
-
-    // Update the displayed value
-    document.getElementById('slider-value').textContent = `${month}/${year}`;
-}
-
-
-
-
-
-/*EVENT LISTENERS*/
 
 // Event listener for the date slider
 document.getElementById('dateSlider').addEventListener('input', function() {
     let { year, month } = sliderValueToDate(parseInt(this.value));
     document.getElementById('slider-value').textContent = `${month}/${year}`;
-    updateFilters(year, month, radioCause);
-    //updateCostDisplay(year);
+    updateGraph(year, month);
+    updateCostDisplay(year);
 });
 
 // Event listener for increasing the date with button
@@ -175,8 +132,7 @@ document.getElementById('increase').addEventListener('click', function() {
     if (currentValue < maxValue) {
         slider.value = currentValue + 1;
         let { year, month } = sliderValueToDate(parseInt(slider.value));
-        updateFilters(year, month, radioCause);
-        //updateCostDisplay(year); // If you have a function to update the cost display
+        updateGraph(year, month);
         document.getElementById('slider-value').textContent = `${month}/${year}`;
     }
 });
@@ -190,60 +146,30 @@ document.getElementById('decrease').addEventListener('click', function() {
     if (currentValue > minValue) {
         slider.value = currentValue - 1;
         let { year, month } = sliderValueToDate(parseInt(slider.value));
-        updateFilters(year, month, radioCause);
-        //updateCostDisplay(year); // If you have a function to update the cost display
+        updateGraph(year, month);
         document.getElementById('slider-value').textContent = `${month}/${year}`;
     }
 });
 
-//event listener for apply date button
-document.getElementById('apply-date').addEventListener('click', handleFilterChange);//function() {
-//     var selectedYear = document.getElementById('year-select').value;
-//     var selectedMonth = document.getElementById('month-select').value;
-
-//     // Combine the year and month to a date string or as needed
-//     //var selectedDate = `${selectedYear}-${selectedMonth}`;
-
-//     // Now you can use selectedDate to filter your data or update your graph/chart
-//     updateFilters(selectedYear, selectedMonth, radioCause);
-//     setSliderValue(selectedYear, selectedMonth)
-// });
-
-// Add event listener for radio buttons 
-document.getElementById('filter-form').addEventListener('change', handleFilterChange);
-
-//helper function for radio buttons
-function handleFilterChange() {
-    console.log('Filter form changed');
-    var radioButtons = document.querySelectorAll('#filter-form input[name="fire-filter"]');
-
-    // Find the selected radio button
-    var selectedOption;
-    for (var i = 0; i < radioButtons.length; i++) {
-        if (radioButtons[i].checked) {
-            selectedOption = radioButtons[i].value;
-            break;
-        }
-    }
+document.getElementById('apply-date').addEventListener('click', function() {
     var selectedYear = document.getElementById('year-select').value;
     var selectedMonth = document.getElementById('month-select').value;
 
-    updateFilters(selectedYear, selectedMonth, selectedOption);
-}
+    // Combine the year and month to a date string or as needed
+    var selectedDate = `${selectedYear}-${selectedMonth}`;
 
-
-
-
+    // Now you can use selectedDate to filter your data or update your graph/chart
+    updateGraphAndChart(selectedDate);
+});
 
 function updateGraphAndChart(date) {
     // Implement the logic to update your graph and chart based on the selected date
-
 }
 
 
 
-
-
-
-
-
+// Initial graph setup
+const initialYear = document.getElementById('dateSlider').value;
+let { year, month } = sliderValueToDate(parseInt(initialYear));
+updateGraph(year, month);
+loadCostData();
