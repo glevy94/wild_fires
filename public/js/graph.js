@@ -133,7 +133,6 @@ document.getElementById('increase').addEventListener('click', function() {
         slider.value = currentValue + 1;
         let { year, month } = sliderValueToDate(parseInt(slider.value));
         updateGraph(year, month);
-        updateCostDisplay(year); // If you have a function to update the cost display
         document.getElementById('slider-value').textContent = `${month}/${year}`;
     }
 });
@@ -148,7 +147,6 @@ document.getElementById('decrease').addEventListener('click', function() {
         slider.value = currentValue - 1;
         let { year, month } = sliderValueToDate(parseInt(slider.value));
         updateGraph(year, month);
-        updateCostDisplay(year); // If you have a function to update the cost display
         document.getElementById('slider-value').textContent = `${month}/${year}`;
     }
 });
