@@ -29,9 +29,41 @@ function plotData(geojsonData, year, month) {
             marker: {
                 size: 5,
                 color: getCategoryColor(feature.properties.FireCause)
-            }
+            },
+            showlegend: false,
         };
     });
+
+    // Dummy traces for custom legend entries
+    var customLegendTraces = [
+        {
+            type: 'scattergeo',
+            mode: 'markers',
+            name: 'Human Cause',
+            lon: [-180],
+            lat: [90],
+            marker: { size: 15, color: 'red' },
+            showlegend: true
+        },
+        {
+            type: 'scattergeo',
+            mode: 'markers',
+            name: 'Natural Cause',
+            lon: [-180],
+            lat: [90],
+            marker: { size: 15, color: 'green' },
+            showlegend: true,
+        },
+        {
+            type: 'scattergeo',
+            mode: 'markers',
+            name: 'Unknown',
+            lon: [-180],
+            lat: [90],
+            marker: { size: 15, color: 'grey' },
+            showlegend: true,
+        }
+    ];
 
     var layout = {
         // title: `Incident Data for ${month}/${year}`,
@@ -42,8 +74,9 @@ function plotData(geojsonData, year, month) {
             },
             showland: true,
             landcolor: 'rgb(255, 249, 240)',
+            bgcolor: '#899499',
         },
-        showlegend: false,
+        showlegend: true,
         autosize: true,
         margin: {
             l: 0,  // Left margin
@@ -52,25 +85,36 @@ function plotData(geojsonData, year, month) {
             t: 0,  // Top margin
             pad: 0  // Padding between plot and margins
         },
+        //plot_bgcolor: "#D3D3D3", // Background color for the plotting area
+        paper_bgcolor: "#899499", // Background color for the entire layout (including margins)
+        legend: {
+            font: {
+                size: 18, // Adjust this value to your preference
+                family: 'Arial, sans-serif', // Optional: specify font family
+                color: 'black' // Optional: specify font color
+            },
+        },
     };
 
     var config = {
         responsive: true,
     }
 
-    Plotly.newPlot('graph', plotData, layout, config);
+    var plotDataCombined = plotData.concat(customLegendTraces);
+
+
+    Plotly.newPlot('graph', plotDataCombined, layout, config);
 }
 
 
-// Function to load data based on year and month and update the graph
 function updateGraph(year, month) {
     let formattedMonth = month.toString();
-
     const fileName = `/data/year_month/data_${year}_${formattedMonth}.geojson`;
-    console.log(fileName)
+    
     let cacheKey = year + '_' + formattedMonth;
     if (dataCache[cacheKey]) {
-        plotData(dataCache[cacheKey], year, month);
+        let filteredGeojsonData = applyFilter(dataCache[cacheKey]);
+        plotData(filteredGeojsonData, year, month);
         return;
     }
 
@@ -80,6 +124,7 @@ function updateGraph(year, month) {
         plotData(filteredGeojsonData, year, month);
     }).catch(error => console.error('Error loading the GeoJSON data:', error));
 }
+
 
 // Event listener for date selection
 document.getElementById('apply-date').addEventListener('click', function() {
@@ -103,10 +148,16 @@ document.querySelectorAll('input[name="fire-filter"]').forEach(radio => {
     radio.addEventListener('change', function() {
         var selectedYear = document.getElementById('year-select').value;
         var selectedMonth = document.getElementById('month-select').value;
-
         updateGraph(selectedYear, selectedMonth);
     });
 });
+
+document.getElementById('apply-date').addEventListener('click', function() {
+    var selectedYear = document.getElementById('year-select').value;
+    var selectedMonth = document.getElementById('month-select').value;
+    updateGraph(selectedYear, selectedMonth);
+});
+
 
 function applyFilter(geojsonData) {
     let selectedFilter = document.querySelector('input[name="fire-filter"]:checked').value;

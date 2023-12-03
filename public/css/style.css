@@ -1,48 +1,3 @@
-#slider-container {
-    width: 100%;
-    position: relative;
-}
-
-#dateSlider {
-    width: 90%;
-    -webkit-appearance: none; /* Override default CSS styles */
-    appearance: none;
-    height: 15px;
-    background: #ddd;
-    outline: none;
-    opacity: 0.7;
-    -webkit-transition: .2s;
-    transition: opacity .2s;
-}
-
-#dateSlider::-webkit-slider-thumb {
-    -webkit-appearance: none; /* Override default CSS styles */
-    appearance: none;
-    width: 25px;
-    height: 25px;
-    background: #4CAF50;
-    cursor: pointer;
-}
-
-#dateSlider::-moz-range-thumb {
-    width: 25px;
-    height: 25px;
-    background: #7b3b98;
-    cursor: pointer;
-}
-
-#slider-value {
-    font-size: 35px;
-    position: absolute;
-    bottom: 25px; /* Adjust as needed */
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-#costDisplay {
-    margin-top: 50px;
-    text-align: center;
-}
 
 #graph {
     width: 100%;
@@ -56,14 +11,31 @@ button {
 }
 
 #timeSeriesPlot {
-    margin-top: 50px;
+    /* margin-top: 50px; */
     width: 100%;   
     height: 40vh;  
+    margin-left: 25px;
     
+}
+
+.center-group {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px; /* Adjust as needed */
+}
+
+.bottom-section {
+    margin-top: auto; /* Pushes to the bottom */
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 /* Sidebar Styling */
 #sidebar {
+    display: flex;
+    flex-direction:column;
     width: 180px;  
     height: 100%;  
     position: fixed; 
@@ -112,7 +84,7 @@ button {
 
 #content {
     margin-left: 200px; 
-    padding: 20px;
+    /* background-color: #D3D3D3;  */
 }
 
 /* Responsive adjustments */
@@ -133,6 +105,7 @@ button {
     font-weight: bold; /* Make the font bold */
     margin-top: 20px; /* Adjust the space above the heading */
     margin-bottom: 20px; /* Adjust the space below the heading */
+    /* background-color: #D3D3D3; */
 }
 
 #time-series-plot {
@@ -141,5 +114,5 @@ button {
     text-align: center; /* Align the text to the center */
     font-weight: bold; /* Make the font bold */
     margin-top: 20px; /* Adjust the space above the heading */
-    margin-bottom: 20px; /* Adjust the space below the heading */
+    margin-bottom: 20px; /*Adjust the space below the heading*/
 }
