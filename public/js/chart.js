@@ -1,8 +1,12 @@
+let currentBarChartFilter = 'both'
+
+
 // Load and process the data, then plot the graph
 function loadDataAndPlot() {
     d3.json('/data/data_2020_2023.geojson').then(function(data) {
         // Process data to extract the required information
-        let processedData = processData(data);
+        let filteredData = filterChartData(data, currentBarChartFilter); 
+        let processedData = processData(filteredData);
 
         // Plot the combined graph
         plotCombinedGraph(processedData);
@@ -68,8 +72,54 @@ function plotCombinedGraph(data) {
         yaxis: 'y2'
     };
 
+    // Define season colors
+    const seasonColors = ['#85C1E9', '#76D7C4', '#FF5733', '#F39C12']; 
+
+    const seasonLegendTraces = [
+        {
+            x: [null],  
+            y: [null],  
+            type: 'bar',
+            mode: 'lines',
+            name: 'Winter',
+            marker: { color: seasonColors[0] },
+            showlegend: true,
+            hoverinfo: 'none'
+        },
+        {
+            x: [null],  
+            y: [null],  
+            type: 'bar',
+            mode: 'lines',
+            name: 'Spring',
+            marker: { color: seasonColors[1] },
+            showlegend: true,
+            hoverinfo: 'none' 
+        },
+        {
+            x: [null], 
+            y: [null],  
+            type: 'bar',
+            mode: 'lines',
+            name: 'Summer',
+            marker: { color: seasonColors[2]},
+            showlegend: true,
+            hoverinfo: 'none' 
+        },
+        {
+            x: [null],  
+            y: [null],  
+            type: 'bar',
+            mode: 'lines',
+            name: 'Fall',
+            marker: { color: seasonColors[3] },
+            showlegend: true,
+            hoverinfo: 'none'
+        },
+    ];
+
     var layout = {
-        //title: 'Fires and Acres Burned per Month',
+        
         xaxis: { title: 'Month' },
         yaxis: { title: 'Number of Fires' },
         yaxis2: {
@@ -77,20 +127,16 @@ function plotCombinedGraph(data) {
             overlaying: 'y',
             side: 'right'
         },
-        //paper_bgcolor: '#D3D3D3',
+        
         shapes: [],
         autosize: true,
         margin: {
-            l: 50,  // Left margin
-            r: 50,  // Right margin
-            b: 100,  // Bottom margin
-            t: 50,  // Top margin
-            pad: 10  // Padding between plot and margins
+            l: 80, 
+            r: 60,  
+            b: 100,  
+            t: 20,  
         }
     };
-
-        // Define season colors
-    const seasonColors = ['#85C1E9', '#76D7C4', '#FF5733', '#F39C12']; // Example colors
 
     // Add highlight shapes
     for (let i = 0; i < data.length; i += 3) {
@@ -121,19 +167,34 @@ function plotCombinedGraph(data) {
         });
     }
 
-    Plotly.newPlot('timeSeriesPlot', [timeSeriesTrace, barChartTrace], layout);
+    var combinedData = [timeSeriesTrace, barChartTrace].concat(seasonLegendTraces);
+
+    Plotly.newPlot('timeSeriesPlot', combinedData, layout);
 }
 
-// Update chart with filter value
+// Function to filter the chart data based on the selected filter
+function filterChartData(data, filter) {
+    if (filter === 'both') {
+        return data; // Return all data if 'Both' is selected
+    }
+
+    // Filter data based on the selected filter ('Human' or 'Natural')
+    return {
+        ...data,
+        features: data.features.filter(feature => feature.properties.FireCause === filter)
+    };
+}
+
+// Event listener for filter changes
 document.getElementById('filter-form').addEventListener('change', function(event) {
     var selectedFilter = event.target.value;
-    
-    updateChartWithFilter(selectedFilter);
+    updateChartWithFilter(selectedFilter); // Update the chart when the filter changes
 });
 
+// Function to update the chart based on the selected filter
 function updateChartWithFilter(filter) {
-    // Implement the logic to update your graph and chart based on the filter
-    // This might involve fetching new data, filtering the existing dataset, and re-rendering the graph/chart
+    currentBarChartFilter = filter; // Update the current filter
+    loadDataAndPlot(); // Reload and replot the data with the new filter
 }
 
 

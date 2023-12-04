@@ -17,19 +17,25 @@ function getCategoryColor(category) {
 
 // Function to plot data using Plotly
 function plotData(geojsonData, year, month) {
-
+    
     // Process the GeoJSON data to extract coordinates and other properties
     var plotData = geojsonData.features.map(function(feature) {
+        var hoverText = `Incident Name: ${feature.properties.IncidentName}<br>` + 
+        `Fire Size: ${feature.properties.IncidentSize} acres<br>` +
+        `Fire Cause: ${feature.properties.FireCause}<br>` +
+        `Fire Cause (General): ${feature.properties.FireCauseGeneral}`;
+
         return {
             type: 'scattergeo',
             mode: 'markers',
-            text: `Fire Size: ${feature.properties.IncidentSize} acres`, // Customize as per your data
+            text: hoverText,
             lon: [feature.geometry.coordinates[0]],
             lat: [feature.geometry.coordinates[1]],
             marker: {
                 size: 5,
                 color: getCategoryColor(feature.properties.FireCause)
             },
+            hoverinfo: 'text',
             showlegend: false,
         };
     });
@@ -66,7 +72,7 @@ function plotData(geojsonData, year, month) {
     ];
 
     var layout = {
-        // title: `Incident Data for ${month}/${year}`,
+        
         geo: {
             scope: 'usa',
             projection: {
@@ -79,20 +85,24 @@ function plotData(geojsonData, year, month) {
         showlegend: true,
         autosize: true,
         margin: {
-            l: 0,  // Left margin
-            r: 0,  // Right margin
-            b: 0,  // Bottom margin
-            t: 0,  // Top margin
-            pad: 0  // Padding between plot and margins
+            l: 0,
+            r: 0, 
+            b: 0, 
+            t: 0,  
+            pad: 0  
         },
-        //plot_bgcolor: "#D3D3D3", // Background color for the plotting area
-        paper_bgcolor: "#899499", // Background color for the entire layout (including margins)
+        paper_bgcolor: "#899499", 
         legend: {
             font: {
-                size: 18, // Adjust this value to your preference
-                family: 'Arial, sans-serif', // Optional: specify font family
-                color: 'black' // Optional: specify font color
+                size: 18, 
+                family: 'Arial, sans-serif', 
+                color: 'black' 
             },
+            x: .98, 
+            y: 0.5, 
+            xanchor: 'right', 
+            yanchor: 'middle' 
+        
         },
     };
 
@@ -148,7 +158,9 @@ document.querySelectorAll('input[name="fire-filter"]').forEach(radio => {
     radio.addEventListener('change', function() {
         var selectedYear = document.getElementById('year-select').value;
         var selectedMonth = document.getElementById('month-select').value;
-        updateGraph(selectedYear, selectedMonth);
+        var selectedFilter = this.value;
+        updateGraph(selectedYear, selectedMonth, selectedFilter); // Update the map
+        setBarChartFilter(selectedFilter); // Update the bar chart
     });
 });
 
